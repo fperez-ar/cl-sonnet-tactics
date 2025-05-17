@@ -1,0 +1,53 @@
+game:
+  title: "Turn-Based Strategy Game"
+  window:
+    width: 800
+    height: 600
+  grid:
+    cell_size: 64
+    width: 10
+    height: 8
+
+controls:
+  cursor_up: "UP"
+  cursor_down: "DOWN"
+  cursor_left: "LEFT"
+  cursor_right: "RIGHT"
+  select_action: "SPACE"
+  move_action: "m"
+  attack_action: "a"
+  pass_turn: "p"
+
+highlights:
+  move_range: [0, 0, 200, 100]  # Blue with transparency
+  attack_range: [255, 100, 100, 100]  # Light red with transparency
+
+terrain_types:
+  hill:
+    color: [100, 200, 100]
+    movement_cost: 1
+    description: "Rolling hills with short grass"
+  mountain:
+    color: [150, 150, 150]
+    movement_cost: 2
+    description: "Rocky mountain terrain, difficult to traverse"
+  forest:
+    color: [0, 100, 0]
+    movement_cost: 1
+    description: "Dense forest with tall trees"
+
+unit_types:
+  melee:
+    strength: 2
+    range: 1
+    hp: 3
+    move: 2
+    color: [255, 0, 0]
+    description: "Close combat warrior"
+  ranged:
+    strength: 1
+    range: 2
+    hp: 1
+    move: 1
+    color: [0, 0, 255]
+    description: "Attacks from distance"
