@@ -74,9 +74,12 @@ class Grid:
     
     def get_level_description(self):
         return self.current_level['description']
-    
+
     def get_player_start_positions(self):
-        return self.current_level['player_units']
-    
+        """Return the player unit starting positions from the level data."""
+        return self.current_level.get('player_units', [])
+
     def get_enemy_start_positions(self):
-        return self.current_level['enemy_units']
+        """Return the enemy unit starting positions from the level data."""
+        return self.current_level.get('enemy_units', [])
+

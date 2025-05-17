@@ -19,55 +19,49 @@ class GameState:
         # Initialize units from level data
         self._initialize_units()
         self.combat_notifications = []
-    
+
     def _initialize_units(self):
+        """Initialize units based on level configuration."""
         # Clear existing units
         self.units = []
         self.player_units = []
         self.enemy_units = []
         
+        # Retrieve unit position data from grid
+        player_positions = self.grid.get_player_start_positions()
+        enemy_positions = self.grid.get_enemy_start_positions()
+        
         # Place player units from level configuration
-        for unit_data in self.grid.get_player_start_positions():
-            x, y, unit_type = unit_data
-            unit = Unit(unit_type, True, self.config, x, y)
-            self.units.append(unit)
-            self.player_units.append(unit)
-            self.grid.place_unit(unit, x, y)
+        for unit_data in player_positions:
+            if len(unit_data) >= 3:  # Ensure we have x, y, and unit_type
+                x, y, unit_type = unit_data
+                
+                # Create unit with correct position and type
+                unit = Unit(unit_type, True, self.config, x, y)
+                self.units.append(unit)
+                self.player_units.append(unit)
+                
+                # Place unit on grid
+                self.grid.place_unit(unit, x, y)
+                print(f"Placed player {unit_type} at ({x}, {y})")
+            else:
+                print(f"Warning: Invalid player unit data format: {unit_data}")
         
         # Place enemy units from level configuration
-        for unit_data in self.grid.get_enemy_start_positions():
-            x, y, unit_type = unit_data
-            unit = Unit(unit_type, False, self.config, x, y)
-            self.units.append(unit)
-            self.enemy_units.append(unit)
-            self.grid.place_unit(unit, x, y)
-
-        self.enemy_units = []
-        self.selected_unit = None
-        self.cursor_x = 0
-        self.cursor_y = 0
-        self.current_turn = "player"  # "player" or "enemy"
-        self.input_handler = None  # Will be set from main.py
-        
-        # Initialize units
-        self._initialize_units()
-    
-    def _initialize_units(self):
-        # Place some player units
-        for i in range(3):
-            unit_type = "melee" if i % 2 == 0 else "ranged"
-            unit = Unit(unit_type, True, self.config, i, 0)
-            self.units.append(unit)
-            self.player_units.append(unit)
-            self.grid.place_unit(unit, i, 0)
-        
-        # Place some enemy units
-        for i in range(3):
-            unit_type = "ranged" if i % 2 == 0 else "melee"
-            unit = Unit(unit_type, False, self.config, i, self.grid.height - 1)
-            self.units.append(unit)
-            self.enemy_units.append(unit)
-            self.grid.place_unit(unit, i, self.grid.height - 1)
+        for unit_data in enemy_positions:
+            if len(unit_data) >= 3:  # Ensure we have x, y, and unit_type
+                x, y, unit_type = unit_data
+                
+                # Create unit with correct position and type
+                unit = Unit(unit_type, False, self.config, x, y)
+                self.units.append(unit)
+                self.enemy_units.append(unit)
+                
+                # Place unit on grid
+                self.grid.place_unit(unit, x, y)
+                print(f"Placed enemy {unit_type} at ({x}, {y})")
+            else:
+                print(f"Warning: Invalid enemy unit data format: {unit_data}")
     
     def update(self):
         # Check for victory conditions
