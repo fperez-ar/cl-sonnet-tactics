@@ -7,6 +7,7 @@ class InputHandler:
         self.config = config
         # Action mode is now only used for display purposes
         self.action_mode = "select"
+        self.quit_requested = False
         
         # Initialize key mappings from config
         self.key_map = self._initialize_key_map()
@@ -45,6 +46,7 @@ class InputHandler:
             "SHIFT": pygame.K_LSHIFT,
             "CTRL": pygame.K_LCTRL,
             "ALT": pygame.K_LALT,
+            "ESCAPE": pygame.K_ESCAPE,
         }
         
         # Map action names to pygame key constants using config
@@ -58,10 +60,15 @@ class InputHandler:
         key_map["move_action"] = key_constants.get(controls["move_action"], pygame.K_m)
         key_map["attack_action"] = key_constants.get(controls["attack_action"], pygame.K_a)
         key_map["pass_turn"] = key_constants.get(controls["pass_turn"], pygame.K_p)
+        key_map["quit_game"] = key_constants.get(controls.get("quit_game", "ESCAPE"), pygame.K_ESCAPE)
         
         return key_map
     
     def handle_event(self, event):
+        if event.type == pygame.KEYDOWN:
+            if event.key == self.key_map["quit_game"]:
+                self.quit_requested = True
+                return
         if self.game_state.current_turn != "player":
             return  # Only process input during player's turn
             
@@ -96,40 +103,70 @@ class InputHandler:
                 # If cursor is at same position as unit, do nothing
                 if (self.game_state.cursor_x == self.game_state.selected_unit.x and 
                     self.game_state.cursor_y == self.game_state.selected_unit.y):
-                    print("Unit already at cursor position")
+                    # print("Unit already at cursor position")
                     return
                 
-                # Get all valid move cells
+                # Check if the unit still has movement points
+                if self.game_state.selected_unit.current_move_points <= 0:
+                    print("Unit has no movement points left")
+                    return
+                    
+                # Get all valid move cells based on remaining movement points
                 move_cells = self.game_state.selected_unit.get_move_range_cells(self.game_state.grid)
                 
                 # Check if cursor is on a valid move cell
                 if (self.game_state.cursor_x, self.game_state.cursor_y) in move_cells:
-                    # Calculate the movement delta
-                    from_x, from_y = self.game_state.selected_unit.x, self.game_state.selected_unit.y
-                    to_x, to_y = self.game_state.cursor_x, self.game_state.cursor_y
+                    # Calculate the movement cost
+                    movement_cost = self.game_state.selected_unit.get_movement_cost_to(
+                        self.game_state.grid, 
+                        self.game_state.cursor_x, 
+                        self.game_state.cursor_y
+                    )
+                    
+                    # Check if unit has enough movement points
+                    if movement_cost > self.game_state.selected_unit.current_move_points:
+                        print(f"Not enough movement points. Cost: {movement_cost}, Available: {self.game_state.selected_unit.current_move_points}")
+                        return
                     
                     # Attempt the move
-                    if self.game_state.grid.move_unit(from_x, from_y, to_x, to_y):
-                        self.game_state.selected_unit.move()
-                        print(f"Unit moved to {to_x}, {to_y}")
+                    if self.game_state.move_selected_unit(self.game_state.cursor_x, self.game_state.cursor_y):
+                        print(f"Unit moved. Remaining points: {self.game_state.selected_unit.current_move_points}")
                     else:
                         print("Move failed")
                 else:
                     print("Cannot move to that location")
-            
+
             # Attack action - immediately attempt to attack at cursor position
             elif event.key == self.key_map["attack_action"] and self.game_state.selected_unit:
                 # Only set mode for display purposes
                 self.action_mode = "attack"
                 
-                # Attempt to attack the unit at cursor position
-                if self.game_state.attack_with_selected_unit(self.game_state.cursor_x, self.game_state.cursor_y):
-                    print("Attack successful")
+                # Check if the unit can attack
+                if not self.game_state.selected_unit.can_attack():
+                    print("Unit cannot attack - already attacked this turn")
+                    return
+                    
+                # Get cell at cursor position
+                cursor_x, cursor_y = self.game_state.cursor_x, self.game_state.cursor_y
+                cell = self.game_state.grid.get_cell(cursor_x, cursor_y)
+                
+                # Check if there's a unit at cursor position
+                if cell and cell['unit'] and not cell['unit'].is_player:
+                    # Get attack range cells
+                    attack_range = self.game_state.get_attack_range_cells()
+                    
+                    # Check if target is in range
+                    if (cursor_x, cursor_y) in attack_range:
+                        # Attempt the attack
+                        if self.game_state.attack_with_selected_unit(cursor_x, cursor_y):
+                            print("Attack successful!")
+                            # Play sound or animation here if desired
+                        else:
+                            print("Attack failed")
+                    else:
+                        print("Target is out of range")
                 else:
-                    print("Cannot attack that target")
-            
-            # End turn
+                    print("No valid target at cursor position")
+
             elif event.key == self.key_map["pass_turn"]:
-                if self.game_state.end_player_turn():
-                    self.action_mode = "select"
-                    print("Turn passed")
+              self.game_state.end_player_turn()

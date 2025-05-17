@@ -7,6 +7,11 @@ from game_state import GameState
 from input_handler import InputHandler
 from renderer import Renderer
 
+class DictToObject:
+  def __init__(self, dictionary):
+    self.__dict__.update(dictionary)
+
+
 def load_config(config_file="config.yaml"):
     with open(config_file, 'r') as file:
         return yaml.safe_load(file)
@@ -42,6 +47,9 @@ def main():
             if event.type == pygame.QUIT:
                 running = False
             input_handler.handle_event(event)
+
+        if input_handler.quit_requested:
+          running = False
         
         # Update game state
         game_state.update()

@@ -18,6 +18,7 @@ class GameState:
         
         # Initialize units from level data
         self._initialize_units()
+        self.combat_notifications = []
     
     def _initialize_units(self):
         # Clear existing units
@@ -81,23 +82,39 @@ class GameState:
         # If it's the enemy's turn, let AI make moves
         if self.current_turn == "enemy":
             self._enemy_turn()
+
+        self.combat_notifications = [n for n in self.combat_notifications if n.update()]
     
     def _enemy_turn(self):
-        # Simple AI that moves and attacks randomly
+        # Simple AI that moves and attacks
         for unit in self.enemy_units:
             if not unit.is_alive():
                 continue
                 
-            if unit.can_move():
-                # Find possible move targets within movement range
+            # As long as the unit has movement points and hasn't attacked
+            while unit.can_move() and unit.current_move_points > 0:
+                # Find possible move targets within movement range based on current move points
                 move_cells = unit.get_move_range_cells(self.grid)
                 
                 if move_cells:
                     # Choose a random move
                     new_x, new_y = random.choice(move_cells)
+                    
+                    # Calculate movement cost
+                    movement_cost = unit.get_movement_cost_to(self.grid, new_x, new_y)
+                    
+                    # Skip if not enough movement points
+                    if movement_cost > unit.current_move_points:
+                        continue
+                        
+                    # Move the unit
                     self.grid.move_unit(unit.x, unit.y, new_x, new_y)
-                    unit.move()
+                    unit.move(movement_cost)
+                else:
+                    # No valid moves left
+                    break
             
+            # Try to attack if possible
             if unit.can_attack():
                 # Find targets in range
                 targets = []
@@ -132,27 +149,69 @@ class GameState:
         # Check if the move is within the unit's move range
         move_cells = self.selected_unit.get_move_range_cells(self.grid)
         if (to_x, to_y) in move_cells:
+            # Calculate the movement cost
+            movement_cost = self.selected_unit.get_movement_cost_to(self.grid, to_x, to_y)
+            
+            # Check if unit has enough movement points
+            if movement_cost > self.selected_unit.current_move_points:
+                print(f"Not enough movement points. Cost: {movement_cost}, Available: {self.selected_unit.current_move_points}")
+                return False
+                
             from_x, from_y = self.selected_unit.x, self.selected_unit.y
             if self.grid.move_unit(from_x, from_y, to_x, to_y):
-                self.selected_unit.move()
+                # Reduce movement points by the cost
+                self.selected_unit.move(movement_cost)
+                print(f"Unit moved to {to_x}, {to_y}. Remaining move points: {self.selected_unit.current_move_points}")
                 return True
         return False
 
-    
     def attack_with_selected_unit(self, target_x, target_y):
+        """Attack an enemy at the target coordinates."""
         if not self.selected_unit or not self.selected_unit.can_attack():
             return False
             
+        # Get the target cell
         cell = self.grid.get_cell(target_x, target_y)
-        if cell and cell['unit'] and not cell['unit'].is_player:
-            target = cell['unit']
-            if self.selected_unit.attack(target):
-                # Check if target was killed
-                if not target.is_alive():
+        if not cell or not cell['unit']:
+            return False
+            
+        # Check if target is an enemy unit
+        target = cell['unit']
+        if target.is_player == self.selected_unit.is_player:
+            return False
+        
+        # Attempt the attack
+        if self.selected_unit.attack(target):
+            # Log the attack
+            print(f"{self.selected_unit.unit_type} attacked {target.unit_type} for {self.selected_unit.strength} damage")
+            
+            # Check if target was killed
+            if not target.is_alive():
+                print(f"{target.unit_type} was defeated!")
+                if target in self.enemy_units:
                     self.enemy_units.remove(target)
-                return True
+                elif target in self.player_units:
+                    self.player_units.remove(target)
+                    
+                # Remove the defeated unit from the grid
+                self.grid.remove_unit(target.x, target.y)
+            
+            return True
+        
         return False
-    
+
+    def get_attackable_enemies(self):
+        """Return a list of enemy units that can be attacked by the selected unit."""
+        if not self.selected_unit or not self.selected_unit.can_attack():
+            return []
+        
+        return self.selected_unit.get_valid_attack_targets(self.grid, self.enemy_units)
+
+    def get_attack_range_cells(self):
+        """Return cells within attack range of selected unit."""
+        if not self.selected_unit or not self.selected_unit.can_attack():
+            return []
+        return self.selected_unit.get_attack_range_cells(self.grid)    
     def end_player_turn(self):
         if self.current_turn == "player":
             self._end_turn()
@@ -199,3 +258,9 @@ class GameState:
         if not self.selected_unit or not self.selected_unit.can_attack():
             return []
         return self.selected_unit.get_attack_range_cells(self.grid)
+
+    # Add this method to GameState
+    def add_combat_notification(self, message, x, y, color=(255, 255, 255)):
+        """Add a temporary combat notification."""
+        notification = CombatNotification(message, x, y, color)
+        self.combat_notifications.append(notification)

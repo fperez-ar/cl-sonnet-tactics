@@ -17,6 +17,7 @@ class Grid:
         # Initialize the grid from the level layout
         self.cells = []
         self._initialize_grid_from_layout()
+        
     
     def _initialize_grid_from_layout(self):
         # Create the grid cells from the layout

@@ -17,6 +17,7 @@ controls:
   move_action: "m"
   attack_action: "a"
   pass_turn: "p"
+  quit_game: "ESCAPE"  # New control for quitting the game
 
 highlights:
   move_range: [0, 0, 200, 100]  # Blue with transparency
@@ -35,10 +36,10 @@ levels:
     description: "A simple starting level"
     # Each string represents a row, each character represents a terrain
     layout:
-      - "MMMM......"
-      - "MMM......."
-      - "M........."
-      - "..F......."
+      - ".........."
+      - ".........."
+      - ".........."
+      - "..FMMM...."
       - "...FF....."
       - ".....FFFFF."
       - "H.....FFFF."
@@ -50,9 +51,8 @@ levels:
       - [2, 0, "melee"]
     # Enemy starting positions (list of [x, y] coordinates)
     enemy_units:
-      - [7, 7, "melee"]
-      - [8, 7, "ranged"]
-      - [9, 7, "melee"]
+      - [5, 5, "melee"]
+      - [5, 6, "melee"]
   
   - name: "Level 2"
     description: "A more challenging level"
