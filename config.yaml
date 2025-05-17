@@ -28,6 +28,7 @@ terrain_mapping:
   "H": "hill"
   "M": "mountain"
   "F": "forest"
+  "D": "desert"
   ".": "plains"  # Added a plains terrain type
 
 # Define the levels
@@ -36,19 +37,19 @@ levels:
     description: "A simple starting level"
     # Each string represents a row, each character represents a terrain
     layout:
+      - "........DD"
+      - ".........D"
+      - "...FFF...."
+      - "..FMMMF..."
+      - "...FFF...."
       - ".........."
-      - ".........."
-      - ".........."
-      - "..FMMM...."
-      - "...FF....."
-      - ".....FFFFF."
       - "H.....FFFF."
       - "HH........."
     # Player starting positions (list of [x, y] coordinates)
     player_units:
       - [0, 0, "melee"]
       - [1, 0, "ranged"]
-      - [2, 0, "melee"]
+      - [2, 0, "artillery"]
     # Enemy starting positions (list of [x, y] coordinates)
     enemy_units:
       - [5, 5, "melee"]
@@ -82,15 +83,19 @@ terrain_types:
     description: "Rolling hills with short grass"
   mountain:
     color: [150, 150, 150]
-    movement_cost: 2
+    movement_cost: 4
     description: "Rocky mountain terrain, difficult to traverse"
   forest:
     color: [0, 100, 0]
-    movement_cost: 1
+    movement_cost: 2
     description: "Dense forest with tall trees"
   plains:
     color: [180, 230, 180]
     movement_cost: 1
+    description: "Flat open terrain, easy to traverse"
+  desert:
+    color: [230, 230, 90]
+    movement_cost: 3
     description: "Flat open terrain, easy to traverse"
 
 unit_types:
@@ -104,7 +109,14 @@ unit_types:
   ranged:
     strength: 1
     range: 2
-    hp: 1
+    hp: 2
     move: 2
     color: [0, 0, 255]
     description: "Attacks from distance"
+  artillery:
+    strength: 2
+    range: 3
+    hp: 1
+    move: 1
+    color: [0, 180, 0]
+    description: "Artillery attacks from far away"
