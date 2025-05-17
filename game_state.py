@@ -3,11 +3,44 @@ from unit import Unit
 import random
 
 class GameState:
-    def __init__(self, grid, config):
+    def __init__(self, grid, config, level_index=0):
         self.grid = grid
         self.config = config
+        self.level_index = level_index
         self.units = []
         self.player_units = []
+        self.enemy_units = []
+        self.selected_unit = None
+        self.cursor_x = 0
+        self.cursor_y = 0
+        self.current_turn = "player"  # "player" or "enemy"
+        self.input_handler = None  # Will be set from main.py
+        
+        # Initialize units from level data
+        self._initialize_units()
+    
+    def _initialize_units(self):
+        # Clear existing units
+        self.units = []
+        self.player_units = []
+        self.enemy_units = []
+        
+        # Place player units from level configuration
+        for unit_data in self.grid.get_player_start_positions():
+            x, y, unit_type = unit_data
+            unit = Unit(unit_type, True, self.config, x, y)
+            self.units.append(unit)
+            self.player_units.append(unit)
+            self.grid.place_unit(unit, x, y)
+        
+        # Place enemy units from level configuration
+        for unit_data in self.grid.get_enemy_start_positions():
+            x, y, unit_type = unit_data
+            unit = Unit(unit_type, False, self.config, x, y)
+            self.units.append(unit)
+            self.enemy_units.append(unit)
+            self.grid.place_unit(unit, x, y)
+
         self.enemy_units = []
         self.selected_unit = None
         self.cursor_x = 0

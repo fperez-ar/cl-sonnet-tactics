@@ -1,24 +1,34 @@
 # grid.py
-import random
-
 class Grid:
-    def __init__(self, config):
+    def __init__(self, config, level_index=0):
         self.cell_size = config['game']['grid']['cell_size']
-        self.width = config['game']['grid']['width']
-        self.height = config['game']['grid']['height']
         self.terrain_types = config['terrain_types']
+        self.terrain_mapping = config['terrain_mapping']
         
-        # Initialize the grid with random terrain
+        # Load level data
+        self.levels = config['levels']
+        self.current_level = self.levels[level_index]
+        self.layout = self.current_level['layout']
+        
+        # Set grid dimensions based on level layout
+        self.height = len(self.layout)
+        self.width = len(self.layout[0]) if self.layout else 0
+        
+        # Initialize the grid from the level layout
         self.cells = []
-        terrain_list = list(self.terrain_types.keys())
+        self._initialize_grid_from_layout()
+    
+    def _initialize_grid_from_layout(self):
+        # Create the grid cells from the layout
+        self.cells = []
         
-        for y in range(self.height):
-            row = []
-            for x in range(self.width):
-                # Randomly choose a terrain type
-                terrain = terrain_list[0] #random.choice(terrain_list)
-                row.append({'terrain': terrain, 'unit': None})
-            self.cells.append(row)
+        for y, row in enumerate(self.layout):
+            grid_row = []
+            for x, char in enumerate(row):
+                # Get the terrain type from the mapping
+                terrain_type = self.terrain_mapping.get(char, list(self.terrain_types.keys())[0])
+                grid_row.append({'terrain': terrain_type, 'unit': None})
+            self.cells.append(grid_row)
     
     def get_cell(self, x, y):
         if 0 <= x < self.width and 0 <= y < self.height:
@@ -57,3 +67,15 @@ class Grid:
                 'movement_cost': self.terrain_types[terrain_type]['movement_cost']
             }
         return None
+    
+    def get_level_name(self):
+        return self.current_level['name']
+    
+    def get_level_description(self):
+        return self.current_level['description']
+    
+    def get_player_start_positions(self):
+        return self.current_level['player_units']
+    
+    def get_enemy_start_positions(self):
+        return self.current_level['enemy_units']

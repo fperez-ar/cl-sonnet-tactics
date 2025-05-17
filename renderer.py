@@ -39,9 +39,18 @@ class Renderer:
         # Render info panels
         self._render_info_panels()
         
+        # Render level info
+        self._render_level_info()
+        
         # Update display
         pygame.display.flip()
-    
+
+    def _render_level_info(self):
+        level_name = self.game_state.grid.get_level_name()
+        level_text = f"Level: {level_name}"
+        level_surface = self.font.render(level_text, True, self.colors['text'])
+        self.screen.blit(level_surface, (10, 10))
+
     def _render_grid(self):
         cell_size = self.game_state.grid.cell_size
         
@@ -185,10 +194,13 @@ class Renderer:
                 )
                 pygame.draw.rect(self.screen, self.colors['info_panel'], order_panel)
                 
-                # Render order options
-                orders_text = "[M] Move  [A] Attack  [P] Pass Turn"
+                # Render order options - updated to reflect direct action at cursor
+                orders_text = "[M] Move to cursor  [A] Attack at cursor"
+                orders2_text = "[P] Pass Turn  [SPACE] Deselect unit"
                 orders = self.font.render(orders_text, True, self.colors['text'])
-                self.screen.blit(orders, (10, screen_height - 160))
+                orders2 = self.font.render(orders2_text, True, self.colors['text'])
+                self.screen.blit(orders, (10, screen_height - 170))
+                self.screen.blit(orders2, (10, screen_height - 150))
         
         # Show current turn info
         turn_text = f"Current Turn: {self.game_state.current_turn.capitalize()}"
